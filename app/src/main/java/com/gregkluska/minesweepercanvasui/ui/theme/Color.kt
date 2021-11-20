@@ -10,6 +10,7 @@ val Teal200 = Color(0xFF03DAC5)
 /** Minesweeper colors */
 val GreenLight = Color(0xFFaad751)
 val GreenDark = Color(0xFF4a752c)
+val GreenBorder = Color(0xFF87AF3A)
 val Green = Color(0xFFa2d149)
 val Brown = Color(0xFFd7b899)
 val BrownLight = Color(0xFFe5c29f)
