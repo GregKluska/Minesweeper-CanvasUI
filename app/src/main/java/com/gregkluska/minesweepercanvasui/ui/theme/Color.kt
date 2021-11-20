@@ -24,3 +24,18 @@ val Purple = Color(0xFFb648f2)
 val Pink = Color(0xFFed44b5)
 val GreenAlt = Color(0xFF008744)
 val MineColor = Color(0x59000000)
+
+data class FieldColorScheme(
+    val default: Color,
+    val revealed: Color,
+)
+
+val lightFieldColor = FieldColorScheme(
+    default = GreenLight,
+    revealed = BrownLight
+)
+
+val darkFieldColor = FieldColorScheme(
+    default = Green,
+    revealed = Brown
+)

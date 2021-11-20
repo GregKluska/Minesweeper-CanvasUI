@@ -5,25 +5,45 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.gregkluska.minesweepercanvasui.ui.theme.MinesweeperCanvasUITheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+
+            val fields = remember {
+                mutableStateOf(
+                    List<List<Game.Field>>(10) { y ->
+                        List<Game.Field>(10) { x ->
+                            Game.Field(
+                                x = x,
+                                y = y,
+                                state = Game.FieldState.Close,
+                                mine = false,
+                                adjacentMines = 0
+                            )
+                        }
+                    }
+                )
+
+            }
+
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
                 Board(
-                    rows = 15,
+                    rows = 10,
                     columns = 10,
-                    onClick = {x, y ->
+                    fields = fields.value,
+                    onClick = { x, y ->
+                        val newFields = fields.value.toMutableList()
+                        val newColumn = newFields[y].toMutableList()
+                        newColumn[x] = newColumn[x].copy(state = Game.FieldState.Open)
+                        newFields[y] = newColumn
+                        fields.value = newFields
                         println("PRESSED X: $x     Y: $y")
                     }
                 )
