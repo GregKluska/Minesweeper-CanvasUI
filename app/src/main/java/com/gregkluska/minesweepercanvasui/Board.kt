@@ -10,19 +10,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
-import androidx.constraintlayout.helper.widget.Layer
 import com.gregkluska.minesweepercanvasui.ui.theme.*
+import kotlin.random.Random.Default.nextInt
 
 @Composable
 fun Board(
@@ -71,32 +68,36 @@ fun Board(
                     )
 
                     // Field
-                    drawRect(
-                        color = colorScheme.revealed,
-                        topLeft = Offset(x = bounds.left, y = bounds.top),
-                        size = Size(width = fieldSize, height = fieldSize)
-                    )
+                    if (!field.mine) {
+                        // Background
+                        drawRect(
+                            color = colorScheme.revealed,
+                            topLeft = Offset(x = bounds.left, y = bounds.top),
+                            size = Size(width = fieldSize, height = fieldSize)
+                        )
 
-                    // Number
-                    if (field.adjacentMines != 0 || (field.adjacentMines != 0 && !field.mine)) {
-                        drawIntoCanvas { canvas ->
+                        // Adjacent mines
+                        if (field.adjacentMines != 0) {
+                            drawIntoCanvas { canvas ->
 
-                            val textPaint = TextPaint()
-                            textPaint.color = Orange.toArgb()
-                            textPaint.textSize = fieldSize * 0.6F
-                            textPaint.textAlign = Paint.Align.CENTER
+                                val textPaint = TextPaint()
+                                textPaint.color = Orange.toArgb()
+                                textPaint.textSize = fieldSize * 0.6F
+                                textPaint.textAlign = Paint.Align.CENTER
 
-                            val textHeight = textPaint.descent() - textPaint.ascent()
-                            val textOffset = textHeight / 2 - textPaint.descent()
+                                val textHeight = textPaint.descent() - textPaint.ascent()
+                                val textOffset = textHeight / 2 - textPaint.descent()
 
-                            canvas.nativeCanvas.drawText(
-                                field.adjacentMines.toString(),
-                                bounds.centerX(),
-                                bounds.centerY() + textOffset,
-                                textPaint
-                            )
+                                canvas.nativeCanvas.drawText(
+                                    field.adjacentMines.toString(),
+                                    bounds.centerX(),
+                                    bounds.centerY() + textOffset,
+                                    textPaint
+                                )
+                            }
                         }
                     }
+
                     counter += 1
                 }
             }
@@ -107,18 +108,18 @@ fun Board(
                     val column = if (row.rem(2) == 0) x else (columns - x - 1)
                     val field = fields[row][column]
 
-                    if(field.state != Game.FieldState.Open) {
+                    if (field.state != Game.FieldState.Open || (field.state == Game.FieldState.Open && field.mine)) {
                         val bounds = RectF(
-                            column * fieldSize -5,
-                            row * fieldSize -5,
-                            (column * fieldSize) + fieldSize +5,
-                            (row * fieldSize) + fieldSize +5
+                            column * fieldSize - 5,
+                            row * fieldSize - 5,
+                            (column * fieldSize) + fieldSize + 5,
+                            (row * fieldSize) + fieldSize + 5
                         )
                         // Field
                         drawRect(
                             color = GreenBorder,
                             topLeft = Offset(x = bounds.left, y = bounds.top),
-                            size = Size(width = fieldSize+10, height = fieldSize+10)
+                            size = Size(width = fieldSize + 10, height = fieldSize + 10)
                         )
                     }
                 }
@@ -132,20 +133,33 @@ fun Board(
                     val field = fields[row][column]
                     val colorScheme = if (counter.rem(2) == 0) darkFieldColor else lightFieldColor
 
-                    if(field.state != Game.FieldState.Open) {
-                        val bounds = RectF(
-                            column * fieldSize,
-                            row * fieldSize,
-                            (column * fieldSize) + fieldSize,
-                            (row * fieldSize) + fieldSize
-                        )
+                    val bounds = RectF(
+                        column * fieldSize,
+                        row * fieldSize,
+                        (column * fieldSize) + fieldSize,
+                        (row * fieldSize) + fieldSize
+                    )
 
+                    if (field.state != Game.FieldState.Open) {
                         // Just a field
                         drawRect(
                             color = colorScheme.default,
                             topLeft = Offset(x = bounds.left, y = bounds.top),
                             size = Size(width = fieldSize, height = fieldSize)
                         )
+                    } else {
+                        if (field.mine) {
+                            drawRect(
+                                color = getRandomMineColor(),
+                                topLeft = Offset(x = bounds.left, y = bounds.top),
+                                size = Size(width = fieldSize, height = fieldSize)
+                            )
+                            drawCircle(
+                                color = MineColor,
+                                radius = 0.55F * fieldSize / 2,
+                                center = Offset(bounds.centerX(), bounds.centerY())
+                            )
+                        }
                     }
 
                     counter += 1
@@ -154,6 +168,12 @@ fun Board(
 
         }
     }
+}
+
+private fun getRandomMineColor(): Color {
+    val colors = listOf(Red, Pink, Purple, Orange, OrangeLight, Blue, BlueLight, GreenAlt)
+    val rand = nextInt(colors.size)
+    return colors[rand]
 }
 
 @Composable
