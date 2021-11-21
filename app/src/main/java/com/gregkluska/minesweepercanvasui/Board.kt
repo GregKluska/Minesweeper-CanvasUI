@@ -110,7 +110,7 @@ fun Board(
                     val field = fields[row][column]
 
                     if (field.state != Game.FieldState.Open || (field.state == Game.FieldState.Open && field.mine)) {
-                        val strokeSize = 6
+                        val strokeSize = 5
 
                         val bounds = getFieldBounds(
                             column = column,

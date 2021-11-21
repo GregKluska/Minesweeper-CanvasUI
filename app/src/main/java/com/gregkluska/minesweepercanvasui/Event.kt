@@ -1,5 +1,6 @@
 package com.gregkluska.minesweepercanvasui
 
+
 sealed class Event {
 
     object Welcome : Event()

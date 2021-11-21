@@ -6,25 +6,47 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
+import com.gregkluska.minesweepercanvasui.ui.animation.Animatable
+import com.gregkluska.minesweepercanvasui.ui.animation.shakeKeyframes
 
 class MainActivity : ComponentActivity() {
 
-    val viewModel: GameViewModel by viewModels()
+    private val viewModel: GameViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
 
             val gameState = viewModel.gameState.collectAsState()
+            val boardOffset = remember { Animatable(Offset(0F, 0F)) }
+
+            LaunchedEffect(gameState.value.state) {
+                when(gameState.value.state) {
+                    Game.State.Running,
+                    Game.State.GameOver -> {
+                        boardOffset.animateTo(
+                            Offset(0F,0F),
+                            shakeKeyframes
+                        )
+                    }
+                    else -> {}
+                }
+            }
 
             Column(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        translationX = boardOffset.value.x
+                        translationY = boardOffset.value.y
+                    }
             ) {
-                println("recalled")
                 Board(
                     rows = gameState.value.options.rows,
                     columns = gameState.value.options.columns,
