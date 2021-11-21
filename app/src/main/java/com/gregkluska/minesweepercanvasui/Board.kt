@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
@@ -60,20 +61,20 @@ fun Board(
                     val field = fields[row][column]
                     val colorScheme = if (counter.rem(2) == 0) darkFieldColor else lightFieldColor
 
-                    val bounds = RectF(
-                        column * fieldSize,
-                        row * fieldSize,
-                        (column * fieldSize) + fieldSize,
-                        (row * fieldSize) + fieldSize
+                    val bounds = getFieldBounds(
+                        column = column,
+                        row = row,
+                        fieldSize = fieldSize
                     )
 
                     // Field
                     if (!field.mine) {
                         // Background
-                        drawRect(
+                        drawField(
                             color = colorScheme.revealed,
-                            topLeft = Offset(x = bounds.left, y = bounds.top),
-                            size = Size(width = fieldSize, height = fieldSize)
+                            left = bounds.left,
+                            top = bounds.top,
+                            size = fieldSize
                         )
 
                         // Adjacent mines
@@ -109,17 +110,19 @@ fun Board(
                     val field = fields[row][column]
 
                     if (field.state != Game.FieldState.Open || (field.state == Game.FieldState.Open && field.mine)) {
-                        val bounds = RectF(
-                            column * fieldSize - 5,
-                            row * fieldSize - 5,
-                            (column * fieldSize) + fieldSize + 5,
-                            (row * fieldSize) + fieldSize + 5
+                        val strokeSize = 6
+
+                        val bounds = getFieldBounds(
+                            column = column,
+                            row = row,
+                            fieldSize = fieldSize
                         )
                         // Field
-                        drawRect(
+                        drawField(
                             color = GreenBorder,
-                            topLeft = Offset(x = bounds.left, y = bounds.top),
-                            size = Size(width = fieldSize + 10, height = fieldSize + 10)
+                            left = bounds.left - strokeSize,
+                            top = bounds.top - strokeSize,
+                            size = fieldSize + strokeSize*2,
                         )
                     }
                 }
@@ -133,26 +136,26 @@ fun Board(
                     val field = fields[row][column]
                     val colorScheme = if (counter.rem(2) == 0) darkFieldColor else lightFieldColor
 
-                    val bounds = RectF(
-                        column * fieldSize,
-                        row * fieldSize,
-                        (column * fieldSize) + fieldSize,
-                        (row * fieldSize) + fieldSize
+                    val bounds = getFieldBounds(
+                        column = column,
+                        row = row,
+                        fieldSize = fieldSize
                     )
-
                     if (field.state != Game.FieldState.Open) {
                         // Just a field
-                        drawRect(
+                        drawField(
                             color = colorScheme.default,
-                            topLeft = Offset(x = bounds.left, y = bounds.top),
-                            size = Size(width = fieldSize, height = fieldSize)
+                            left = bounds.left,
+                            top = bounds.top,
+                            size = fieldSize,
                         )
                     } else {
                         if (field.mine) {
-                            drawRect(
+                            drawField(
                                 color = getRandomMineColor(),
-                                topLeft = Offset(x = bounds.left, y = bounds.top),
-                                size = Size(width = fieldSize, height = fieldSize)
+                                left = bounds.left,
+                                top = bounds.top,
+                                size = fieldSize,
                             )
                             drawCircle(
                                 color = MineColor,
@@ -174,6 +177,34 @@ private fun getRandomMineColor(): Color {
     val colors = listOf(Red, Pink, Purple, Orange, OrangeLight, Blue, BlueLight, GreenAlt)
     val rand = nextInt(colors.size)
     return colors[rand]
+}
+
+fun DrawScope.drawField(
+    color: Color,
+    left: Float,
+    top: Float,
+    size: Float,
+) {
+
+
+    drawRect(
+        color = color,
+        topLeft = Offset(x = left, y = top),
+        size = Size(width = size, height = size)
+    )
+}
+
+private fun getFieldBounds(
+    column: Int,
+    row: Int,
+    fieldSize: Float
+): RectF {
+    return RectF(
+        column * fieldSize,
+        row * fieldSize,
+        (column * fieldSize) + fieldSize,
+        (row * fieldSize) + fieldSize
+    )
 }
 
 @Composable
