@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
@@ -55,6 +56,8 @@ class MainActivity : ComponentActivity() {
                         viewModel.dispatch(Event.Click(x, y))
                     }
                 )
+                
+                Text(text = gameState.value.state.toString())
             }
         }
     }

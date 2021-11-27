@@ -19,95 +19,110 @@ class GameViewModel : ViewModel() {
         get() = _gameState.value
 
     init {
-        dispatch(Event.Welcome)
+        dispatch(Event.Intro)
     }
 
     fun dispatch(event: Event) {
         when (event) {
-            Event.Welcome -> onWelcome()
-            Event.Start -> onStart()
-            Event.Reset -> onReset()
-            Event.GameOver -> onGameOver()
+            Event.Intro -> onIntro()
+            is Event.Win -> onWin(event.x, event.y)
+            is Event.GameOver -> onGameOver(event.x, event.y)
             is Event.OptionsUpdate -> onOptionsUpdate(event.options)
             is Event.Click -> onClick(event.x, event.y)
             is Event.LongClick -> onLongClick(event.x, event.y)
         }
     }
 
+    private fun onWin(x: Int, y: Int) {
+        val fields = game.openField(x, y)
+        dispatchState(
+            gameState = game.copy(
+                fields = fields,
+                state = Game.State.Win
+            )
+        )
+    }
+
     private fun onClick(x: Int, y: Int) {
         Log.d(TAG, "onClick: called with x = $x, y = $y")
 
-        if(game.state != Game.State.Running) {
-//            return
-            dispatch(Event.Start)
-        }
-
         val field = game.fields[y][x] // IndexOutOfBoundsException
 
-        if(field.state == Game.FieldState.Close) {
-            Log.d(TAG, "Field: $field")
+        when(game.state) {
+            Game.State.Intro,
+            Game.State.Running -> {
+                // Only able to open field when it's closed.
+                if(field.state == Game.FieldState.Close) {
+                    if(field.mine) {
+                        dispatch(Event.GameOver(x = x, y = y))
+                        return
+                    } else {
+                        // Count unrevealed fields
+                        val fields = game.openField(x, y)
 
+                        val flatFields = fields.flatMap { it.asIterable() }
+                        val remainingFields = flatFields.filter { it.state == Game.FieldState.Close }
 
-            val fields = game.openField(x, y)
-            Log.d(TAG, "Fields: $fields")
-            dispatchState(
-                game.copy(
-                    fields = fields,
-                    state = if(field.mine) Game.State.GameOver else game.state,
-                )
-            )
+                        println("Remaining fields: ${remainingFields.size}")
+
+                        if(remainingFields.size == game.options.mines) {
+                            dispatch(Event.Win(x = x, y = y))
+                            return
+                        }
+
+                        dispatchState(
+                            game.copy(
+                                fields = fields,
+                                state = Game.State.Running // Just because current state may be intro
+                            )
+                        )
+                    }
+                }
+            }
+            Game.State.Win,
+            Game.State.GameOver -> dispatch(Event.Intro)
         }
     }
 
     private fun onLongClick(x: Int, y: Int) {
-        Log.d(TAG, "onLongClick: called with x = $x, y = $y")
-
-        if(game.state != Game.State.Running) return
-        val currState = game.fields[y][x].state
-        if(currState == Game.FieldState.Open) return
-
-        val nextState = if(currState == Game.FieldState.Close) Game.FieldState.Flag else Game.FieldState.Close
-
-        val fields = game._fields
-        fields[y][x] = fields[y][x].copy(state = nextState)
-
-        dispatchState(
-            game.copy(
-                fields = fields
-            )
-        )
+//        Log.d(TAG, "onLongClick: called with x = $x, y = $y")
+//
+//        if(game.state != Game.State.Running) return
+//        val currState = game.fields[y][x].state
+//        if(currState == Game.FieldState.Open) return
+//
+//        val nextState = if(currState == Game.FieldState.Close) Game.FieldState.Flag else Game.FieldState.Close
+//
+//        val fields = game._fields
+//        fields[y][x] = fields[y][x].copy(state = nextState)
+//
+//        dispatchState(
+//            game.copy(
+//                fields = fields
+//            )
+//        )
 
     }
 
-    private fun onWelcome() {
-        Log.d(TAG, "onWelcome: called")
-        dispatchState(gameState = Game())
+    private fun onIntro() {
+        Log.d(TAG, "onIntro: called")
+        dispatchState(gameState = Game(options = game.options))
     }
 
-    private fun onStart() {
-        Log.d(TAG, "onStart: called")
-        if (game.state == Game.State.Welcome) {
-            dispatchState(gameState = game.copy(state = Game.State.Running))
-        }
-    }
+    private fun onGameOver(x: Int, y: Int) {
+        val fields = game.openField(x, y)
 
-    private fun onReset() {
-        Log.d(TAG, "onReset: called")
-        dispatchState(Game(options = game.options))
-    }
-
-    private fun onGameOver() {
-        Log.d(TAG, "onGameOver: called")
-        // Todo: state check. onGameOver can be called on running game only
-        if(game.state == Game.State.Running) {
-            dispatchState(game.copy(state = Game.State.GameOver))
-        }
+        dispatchState(game.copy(
+            fields = fields,
+            state = Game.State.GameOver
+        ))
+        // Start animation with bombs
     }
 
     private fun onOptionsUpdate(options: Options) {
         Log.d(TAG, "onOptionsUpdate: called with options = $options")
         // It's basically reset with custom options
-        dispatchState(gameState = game.copy(state = Game.State.Welcome, options = options))
+        dispatchState(gameState = game.copy(state = Game.State.Intro, options = options))
     }
 
     private fun dispatchState(gameState: Game) {

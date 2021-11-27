@@ -5,7 +5,7 @@ import kotlin.random.Random
 import kotlin.random.nextInt
 
 data class Game(
-    val state: State = State.Welcome,
+    val state: State = State.Intro,
     val options: Options = Options(),
     var fields: List<List<Field>> = listOf()
 ) {
@@ -24,7 +24,7 @@ data class Game(
             // Generate fields
             fields = MutableList(options.rows) { row ->
                 MutableList(options.columns) { col ->
-                    val index = (10 * row + col ) // TODO: Should that be -1 ?
+                    val index = (10 * row + col )
                     Field(
                         x = col,
                         y = row,
@@ -149,7 +149,8 @@ data class Game(
 
     enum class FieldState { Open, Close, Flag }
 
-    enum class State { Welcome, Running, Win, GameOver }
+    enum class State { Intro, Running, Win, GameOver }
+
 }
 
 data class Options(
